@@ -16,6 +16,7 @@ import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convit
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOrdensRouteImport } from './routes/_authenticated/ordens'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -51,22 +52,29 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOrdensIdRoute = AuthenticatedOrdensIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedOrdensRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/ordens': typeof AuthenticatedOrdensRoute
+  '/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/ordens': typeof AuthenticatedOrdensRoute
+  '/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -74,9 +82,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/ordens': typeof AuthenticatedOrdensRoute
+  '/_authenticated/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/ordens'
     | '/perfil'
     | '/aceitar-convite/$token'
+    | '/ordens/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/ordens'
     | '/perfil'
     | '/aceitar-convite/$token'
+    | '/ordens/$id'
   id:
     | '__root__'
     | '/'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ordens'
     | '/_authenticated/perfil'
     | '/aceitar-convite/$token'
+    | '/_authenticated/ordens/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,18 +176,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/ordens/$id': {
+      id: '/_authenticated/ordens/$id'
+      path: '/$id'
+      fullPath: '/ordens/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensIdRouteImport
+      parentRoute: typeof AuthenticatedOrdensRoute
+    }
   }
 }
 
+interface AuthenticatedOrdensRouteChildren {
+  AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
+}
+
+const AuthenticatedOrdensRouteChildren: AuthenticatedOrdensRouteChildren = {
+  AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
+}
+
+const AuthenticatedOrdensRouteWithChildren =
+  AuthenticatedOrdensRoute._addFileChildren(AuthenticatedOrdensRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedOrdensRoute: typeof AuthenticatedOrdensRoute
+  AuthenticatedOrdensRoute: typeof AuthenticatedOrdensRouteWithChildren
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedOrdensRoute: AuthenticatedOrdensRoute,
+  AuthenticatedOrdensRoute: AuthenticatedOrdensRouteWithChildren,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
 }
 
@@ -192,3 +222,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
