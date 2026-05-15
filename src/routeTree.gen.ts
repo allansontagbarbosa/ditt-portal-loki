@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedOrdensRouteImport } from './routes/_authenticated/ordens'
+import { Route as AuthenticatedGarantiasRouteImport } from './routes/_authenticated/garantias'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAparelhosRouteImport } from './routes/_authenticated/aparelhos'
@@ -49,6 +50,11 @@ const AuthenticatedOrdensRoute = AuthenticatedOrdensRouteImport.update({
   path: '/ordens',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGarantiasRoute = AuthenticatedGarantiasRouteImport.update({
+  id: '/garantias',
+  path: '/garantias',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/aparelhos': typeof AuthenticatedAparelhosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/garantias': typeof AuthenticatedGarantiasRoute
   '/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/aparelhos': typeof AuthenticatedAparelhosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/garantias': typeof AuthenticatedGarantiasRoute
   '/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated/aparelhos': typeof AuthenticatedAparelhosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/_authenticated/garantias': typeof AuthenticatedGarantiasRoute
   '/_authenticated/ordens': typeof AuthenticatedOrdensRouteWithChildren
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/aparelhos'
     | '/dashboard'
     | '/financeiro'
+    | '/garantias'
     | '/ordens'
     | '/perfil'
     | '/aceitar-convite/$token'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/aparelhos'
     | '/dashboard'
     | '/financeiro'
+    | '/garantias'
     | '/ordens'
     | '/perfil'
     | '/aceitar-convite/$token'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_authenticated/aparelhos'
     | '/_authenticated/dashboard'
     | '/_authenticated/financeiro'
+    | '/_authenticated/garantias'
     | '/_authenticated/ordens'
     | '/_authenticated/perfil'
     | '/aceitar-convite/$token'
@@ -193,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdensRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/garantias': {
+      id: '/_authenticated/garantias'
+      path: '/garantias'
+      fullPath: '/garantias'
+      preLoaderRoute: typeof AuthenticatedGarantiasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/financeiro': {
       id: '/_authenticated/financeiro'
       path: '/financeiro'
@@ -239,6 +258,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAparelhosRoute: typeof AuthenticatedAparelhosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
+  AuthenticatedGarantiasRoute: typeof AuthenticatedGarantiasRoute
   AuthenticatedOrdensRoute: typeof AuthenticatedOrdensRouteWithChildren
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
 }
@@ -247,6 +267,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAparelhosRoute: AuthenticatedAparelhosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
+  AuthenticatedGarantiasRoute: AuthenticatedGarantiasRoute,
   AuthenticatedOrdensRoute: AuthenticatedOrdensRouteWithChildren,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
 }
