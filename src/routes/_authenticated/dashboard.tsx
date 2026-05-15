@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, AlertCircle, Wallet, Clock, Wrench, PackageCheck, ArrowRight } from "lucide-react";
+import { Loader2, AlertCircle, Wallet, Clock, Wrench, PackageCheck, ArrowRight, Smartphone, ShieldCheck, ChevronRight } from "lucide-react";
 import { useDashboardLojista } from "@/hooks/useDashboardLojista";
 import { fmtBRL } from "@/lib/formatters";
 import { OSCard } from "@/components/OSCard";
@@ -89,6 +89,15 @@ function DashboardPage() {
         />
       </div>
 
+      {/* Atalhos */}
+      <div className="grid grid-cols-1 gap-2">
+        <ShortcutLink to="/financeiro" icon={Wallet} title="Financeiro" subtitle="Lançamentos e saldo" />
+        <div className="grid grid-cols-2 gap-2">
+          <ShortcutLink to="/aparelhos" icon={Smartphone} title="Aparelhos" />
+          <ShortcutLink to="/garantias" icon={ShieldCheck} title="Garantias" />
+        </div>
+      </div>
+
       {/* Últimas OSs */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -134,5 +143,33 @@ function KpiCard({ icon: Icon, label, valor, destaque }: KpiProps) {
       </p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
+  );
+}
+
+function ShortcutLink({
+  to,
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  to: "/financeiro" | "/aparelhos" | "/garantias";
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:bg-muted/50"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{title}</p>
+        {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+    </Link>
   );
 }
