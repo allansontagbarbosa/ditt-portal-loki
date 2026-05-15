@@ -62,32 +62,6 @@ function AceitarConvitePage() {
     })();
   }, [token]);
 
-  // 2. Se já há sessão, tenta vincular direto
-  useEffect(() => {
-    if (carregando || !info?.valido) return;
-    (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-      setVinculando(true);
-      const { data, error } = await supabase.rpc("aceitar_convite_cliente", {
-        p_token: token,
-      });
-      const ok = (data as { success?: boolean } | null)?.success;
-      if (!error && ok) {
-        nav({ to: "/dashboard" });
-      } else {
-        setErro(
-          (data as { error?: string } | null)?.error ??
-            error?.message ??
-            "Erro ao vincular convite",
-        );
-        setVinculando(false);
-      }
-    })();
-  }, [carregando, info, token, nav]);
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErro(null);
@@ -102,48 +76,52 @@ function AceitarConvitePage() {
     }
 
     setSubmetendo(true);
-    const emailNorm = email.trim().toLowerCase();
-    const { data: signupData, error: signupErr } = await supabase.auth.signUp({
-      email: emailNorm,
-      password: senha,
-    });
+    try {
+      const resp = await fetch(
+        `${SUPABASE_URL}/functions/v1/aceitar-convite-portal`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password: senha }),
+        },
+      );
+      const data = (await resp.json()) as {
+        success?: boolean;
+        error?: string;
+        autologin?: boolean;
+        cliente_nome?: string;
+        session?: { access_token: string; refresh_token: string };
+      };
 
-    if (signupErr) {
-      if (/already registered|user already/i.test(signupErr.message)) {
-        nav({
-          to: "/login",
-          search: { redirect: `/aceitar-convite/${token}`, email: emailNorm },
-        });
+      if (!data.success) {
+        const msg = data.error ?? "Erro ao aceitar convite";
+        setErro(msg);
+        toast.error(msg);
+        setSubmetendo(false);
         return;
       }
-      setErro(signupErr.message);
-      setSubmetendo(false);
-      return;
-    }
 
-    if (!signupData.session) {
-      setErro(
-        "Conta criada mas sem sessão ativa. Verifique se 'Confirm email' está desativado no Supabase.",
-      );
-      setSubmetendo(false);
-      return;
-    }
+      if (data.autologin && data.session) {
+        setVinculando(true);
+        const { error } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        if (!error) {
+          toast.success(`Bem-vindo, ${data.cliente_nome ?? ""}!`);
+          nav({ to: "/dashboard" });
+          return;
+        }
+      }
 
-    const { data, error } = await supabase.rpc("aceitar_convite_cliente", {
-      p_token: token,
-    });
-    const ok = (data as { success?: boolean } | null)?.success;
-    if (error || !ok) {
-      setErro(
-        (data as { error?: string } | null)?.error ??
-          error?.message ??
-          "Erro ao vincular convite",
-      );
+      toast.success("Conta criada! Faça login.");
+      nav({ to: "/login" });
+    } catch (e) {
+      const msg = `Erro: ${(e as Error).message}`;
+      setErro(msg);
+      toast.error(msg);
       setSubmetendo(false);
-      return;
     }
-
-    nav({ to: "/dashboard" });
   }
 
   if (carregando) {
