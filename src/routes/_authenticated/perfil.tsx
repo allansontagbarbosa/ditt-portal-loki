@@ -75,9 +75,14 @@ function PerfilPage() {
   }
 
   function handleSalvar() {
-    const dados: Record<string, string | null> = {};
+    const dados: AtualizarPerfilPayload = {};
     (Object.keys(form) as EditableField[]).forEach((k) => {
-      dados[k] = form[k].trim() || null;
+      const v = form[k].trim();
+      if (k === "complemento") {
+        dados.complemento = v || null;
+      } else {
+        dados[k] = v;
+      }
     });
     atualizar.mutate(dados, { onSuccess: () => setDirty(false) });
   }
