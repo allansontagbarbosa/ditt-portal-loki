@@ -1,8 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, AlertCircle, Wallet, Clock, Wrench, PackageCheck, ArrowRight, Smartphone, ShieldCheck, ChevronRight } from "lucide-react";
-import { useDashboardLojista } from "@/hooks/useDashboardLojista";
-import { fmtBRL } from "@/lib/formatters";
-import { OSCard } from "@/components/OSCard";
+import {
+  Loader2,
+  AlertCircle,
+  Wallet,
+  PackageCheck,
+  ShieldCheck,
+  ListOrdered,
+  ArrowRight,
+  Smartphone,
+  ChevronRight,
+} from "lucide-react";
+import { useDashboardLojista, type UltimaOrdem } from "@/hooks/useDashboardLojista";
+import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -30,7 +39,7 @@ function DashboardPage() {
     );
   }
 
-  const devendo = data.saldo_devedor > 0;
+  const devendo = data.saldo.devedor > 0;
 
   return (
     <div className="space-y-6">
@@ -54,39 +63,30 @@ function DashboardPage() {
           </span>
         </div>
         <p className={`mt-2 text-3xl font-bold ${devendo ? "text-destructive" : "text-primary"}`}>
-          {fmtBRL(data.saldo_devedor)}
+          {fmtBRL(data.saldo.devedor)}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border/60 pt-3">
           <div>
             <p className="text-xs text-muted-foreground">Faturado</p>
-            <p className="text-sm font-semibold">{fmtBRL(data.total_faturado)}</p>
+            <p className="text-sm font-semibold">{fmtBRL(data.saldo.total_faturado)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Pago</p>
-            <p className="text-sm font-semibold">{fmtBRL(data.total_pago)}</p>
+            <p className="text-sm font-semibold">{fmtBRL(data.saldo.total_pago)}</p>
           </div>
         </div>
       </div>
 
       {/* 3 KPIs */}
       <div className="grid grid-cols-3 gap-3">
+        <KpiCard icon={PackageCheck} label="Entregues" valor={data.ordens.entregues} />
         <KpiCard
-          icon={Clock}
-          label="Aguardando"
-          valor={data.qtd_aguardando_aprovacao}
-          destaque={data.qtd_aguardando_aprovacao > 0}
+          icon={ShieldCheck}
+          label="Garantias"
+          valor={data.garantias_ativas}
+          destaque={data.garantias_ativas > 0}
         />
-        <KpiCard
-          icon={Wrench}
-          label="Em andamento"
-          valor={data.qtd_em_andamento}
-        />
-        <KpiCard
-          icon={PackageCheck}
-          label="Pronta"
-          valor={data.qtd_pronta_para_retirar}
-          destaque={data.qtd_pronta_para_retirar > 0}
-        />
+        <KpiCard icon={ListOrdered} label="Total OSs" valor={data.ordens.total} />
       </div>
 
       {/* Atalhos */}
@@ -109,14 +109,14 @@ function DashboardPage() {
             Ver todas <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        {data.ultimas_oss.length === 0 && (
+        {data.ultimas_ordens.length === 0 && (
           <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
             Nenhuma ordem registrada ainda.
           </div>
         )}
         <div className="space-y-2">
-          {data.ultimas_oss.map((os) => (
-            <OSCard key={os.id} os={os} />
+          {data.ultimas_ordens.map((os) => (
+            <UltimaOrdemCard key={os.id} os={os} />
           ))}
         </div>
       </div>
@@ -143,6 +143,40 @@ function KpiCard({ icon: Icon, label, valor, destaque }: KpiProps) {
       </p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
+  );
+}
+
+function UltimaOrdemCard({ os }: { os: UltimaOrdem }) {
+  const s = statusInfo(os.status);
+  const data = os.data_conclusao ?? os.data_entrega ?? os.data_entrada;
+  const aparelho =
+    [os.aparelho?.marca, os.aparelho?.modelo].filter(Boolean).join(" ") ||
+    "Aparelho sem modelo";
+  const numero = os.numero_formatado ?? (os.numero != null ? `#${os.numero}` : "—");
+  return (
+    <Link
+      to="/ordens/$id"
+      params={{ id: os.id }}
+      className="block rounded-xl border bg-card p-4 text-card-foreground transition-colors hover:bg-muted/50"
+    >
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold">{numero}</span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.classes}`}
+            >
+              {s.label}
+            </span>
+          </div>
+          <p className="truncate text-sm text-foreground">{aparelho}</p>
+          <p className="text-xs text-muted-foreground">
+            {fmtData(data)} · {fmtBRL(os.valor_total)}
+          </p>
+        </div>
+        <ChevronRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+      </div>
+    </Link>
   );
 }
 
