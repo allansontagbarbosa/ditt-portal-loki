@@ -16,7 +16,7 @@ import { useOrdemDetalhe } from "@/hooks/useOrdemDetalhe";
 import { useAprovarOrcamento, useReprovarOrcamento } from "@/hooks/useDecidirOrcamento";
 import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
 
-export const Route = createFileRoute("/_authenticated/ordens/$id")({
+export const Route = createFileRoute("/_authenticated/ordens_/$id")({
   component: OrdemDetalhePage,
 });
 
