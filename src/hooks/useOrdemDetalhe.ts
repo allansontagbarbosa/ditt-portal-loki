@@ -24,6 +24,7 @@ export interface OrdemDetalhe {
     reprovado_em: string | null;
     motivo_reprovacao: string | null;
   };
+  garantia_dias?: number | null;
 }
 
 export function useOrdemDetalhe(osId: string | undefined) {
@@ -31,11 +32,12 @@ export function useOrdemDetalhe(osId: string | undefined) {
     queryKey: ["portal", "ordem", osId],
     enabled: !!osId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("portal_detalhe_ordem", { p_os_id: osId });
+      const { data, error } = await supabase.rpc("portal_detalhe_ordem", { p_ordem_id: osId });
       if (error) throw error;
-      const d = data as { success: boolean; os?: OrdemDetalhe; error?: string };
-      if (!d.success || !d.os) throw new Error(d.error ?? "OS não encontrada");
-      return d.os;
+      const d = data as { success: boolean; os?: OrdemDetalhe; ordem?: OrdemDetalhe; error?: string };
+      const os = d.os ?? d.ordem;
+      if (!d.success || !os) throw new Error(d.error ?? "OS não encontrada");
+      return os;
     },
   });
 }
