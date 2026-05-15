@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Smartphone, ShieldCheck, ChevronRight, Loader2, AlertCircle, LogOut, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuPerfil, type MeuPerfil } from "@/hooks/useMeuPerfil";
-import { useAtualizarMeuPerfil } from "@/hooks/useAtualizarMeuPerfil";
+import { useAtualizarMeuPerfil, type AtualizarPerfilPayload } from "@/hooks/useAtualizarMeuPerfil";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
