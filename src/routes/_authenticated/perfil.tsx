@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Smartphone, ShieldCheck, ChevronRight, Loader2, AlertCircle, LogOut, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuPerfil, type MeuPerfil } from "@/hooks/useMeuPerfil";
-import { useAtualizarMeuPerfil } from "@/hooks/useAtualizarMeuPerfil";
+import { useAtualizarMeuPerfil, type AtualizarPerfilPayload } from "@/hooks/useAtualizarMeuPerfil";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -75,9 +75,14 @@ function PerfilPage() {
   }
 
   function handleSalvar() {
-    const dados: Record<string, string | null> = {};
+    const dados: AtualizarPerfilPayload = {};
     (Object.keys(form) as EditableField[]).forEach((k) => {
-      dados[k] = form[k].trim() || null;
+      const v = form[k].trim();
+      if (k === "complemento") {
+        dados.complemento = v || null;
+      } else {
+        dados[k] = v;
+      }
     });
     atualizar.mutate(dados, { onSuccess: () => setDirty(false) });
   }

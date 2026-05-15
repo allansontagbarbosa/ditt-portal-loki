@@ -87,11 +87,11 @@ function Garantias() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {[g.marca, g.modelo].filter(Boolean).join(" ") || "Aparelho"}
+                  {[g.aparelho_marca, g.aparelho_modelo].filter(Boolean).join(" ") || "Aparelho"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  OS #{g.numero_os}
-                  {g.imei ? ` · IMEI ${g.imei}` : ""}
+                  OS #{g.numero_os ?? "—"}
+                  {g.aparelho_imei ? ` · IMEI ${g.aparelho_imei}` : ""}
                 </p>
                 <p
                   className={`mt-1 text-[11px] font-medium ${
@@ -102,7 +102,7 @@ function Garantias() {
                 >
                   {g.ativa
                     ? `${g.dias_restantes} ${g.dias_restantes === 1 ? "dia restante" : "dias restantes"}`
-                    : `Vencida em ${fmtData(g.fim_em)}`}
+                    : `Vencida em ${fmtData(g.data_fim)}`}
                 </p>
               </div>
               <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
