@@ -89,6 +89,15 @@ function DashboardPage() {
         />
       </div>
 
+      {/* Atalhos */}
+      <div className="grid grid-cols-1 gap-2">
+        <ShortcutLink to="/financeiro" icon={Wallet} title="Financeiro" subtitle="Lançamentos e saldo" />
+        <div className="grid grid-cols-2 gap-2">
+          <ShortcutLink to="/aparelhos" icon={Smartphone} title="Aparelhos" />
+          <ShortcutLink to="/garantias" icon={ShieldCheck} title="Garantias" />
+        </div>
+      </div>
+
       {/* Últimas OSs */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
