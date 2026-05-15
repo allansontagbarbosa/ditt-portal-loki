@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, AlertCircle, Wallet, Clock, Wrench, PackageCheck, ArrowRight } from "lucide-react";
+import { Loader2, AlertCircle, Wallet, Clock, Wrench, PackageCheck, ArrowRight, Smartphone, ShieldCheck, ChevronRight } from "lucide-react";
 import { useDashboardLojista } from "@/hooks/useDashboardLojista";
 import { fmtBRL } from "@/lib/formatters";
 import { OSCard } from "@/components/OSCard";
