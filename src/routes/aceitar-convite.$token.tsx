@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+
+const SUPABASE_URL = "https://cgsdnvuigolxwzfmnykk.supabase.co";
 import { DittLogo } from "@/components/DittLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
