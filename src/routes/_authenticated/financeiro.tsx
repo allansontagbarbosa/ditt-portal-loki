@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useExtratoFinanceiro, type Lancamento } from "@/hooks/useExtratoFinanceiro";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowDown, ArrowUp, AlertCircle } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { ArrowDown, ArrowUp, AlertCircle, ChevronRight, CheckCircle2 } from "lucide-react";
 import { fmtBRL, fmtData } from "@/lib/formatters";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
@@ -20,6 +26,7 @@ const PERIODOS = [
 function Financeiro() {
   const [dias, setDias] = useState<number>(90);
   const { data, isLoading, isError, error } = useExtratoFinanceiro(dias);
+  const [pagamentoAberto, setPagamentoAberto] = useState<Lancamento | null>(null);
 
   return (
     <div className="space-y-5">
@@ -101,25 +108,69 @@ function Financeiro() {
             Sem lançamentos nesse período
           </Card>
         ) : (
-          data!.lancamentos.map((l) => <LancamentoRow key={l.id} lancamento={l} />)
+          data!.lancamentos.map((l) => (
+            <LancamentoRow
+              key={l.id}
+              lancamento={l}
+              onAbrirPagamento={setPagamentoAberto}
+            />
+          ))
         )}
       </div>
+
+      <Sheet
+        open={!!pagamentoAberto}
+        onOpenChange={(open) => !open && setPagamentoAberto(null)}
+      >
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>Detalhes do pagamento</SheetTitle>
+          </SheetHeader>
+          {pagamentoAberto && <DetalhePagamento lancamento={pagamentoAberto} />}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function LancamentoRow({ lancamento: l }: { lancamento: Lancamento }) {
-  const credito = l.direcao === "credito";
+function LancamentoRow({
+  lancamento,
+  onAbrirPagamento,
+}: {
+  lancamento: Lancamento;
+  onAbrirPagamento: (l: Lancamento) => void;
+}) {
+  if (lancamento.tipo === "os") {
+    return (
+      <Link to="/ordens/$id" params={{ id: lancamento.id }} className="block">
+        <LancamentoCard lancamento={lancamento} />
+      </Link>
+    );
+  }
   return (
-    <Card className="flex items-center gap-3 p-3">
+    <button
+      type="button"
+      onClick={() => onAbrirPagamento(lancamento)}
+      className="block w-full text-left"
+    >
+      <LancamentoCard lancamento={lancamento} />
+    </button>
+  );
+}
+
+function LancamentoCard({ lancamento: l }: { lancamento: Lancamento }) {
+  const credito = l.direcao === "credito";
+  const Icon = credito ? ArrowUp : ArrowDown;
+  return (
+    <Card className="flex items-center gap-3 p-3 transition-colors hover:bg-accent cursor-pointer">
       <div
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
           credito
-            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+            ? "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+            : "bg-muted text-muted-foreground"
         }`}
       >
-        {credito ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+        <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{l.descricao}</p>
@@ -127,12 +178,54 @@ function LancamentoRow({ lancamento: l }: { lancamento: Lancamento }) {
       </div>
       <p
         className={`shrink-0 text-sm font-semibold ${
-          credito ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+          credito ? "text-green-700 dark:text-green-400" : "text-foreground"
         }`}
       >
         {credito ? "+" : "−"}
         {fmtBRL(Math.abs(l.valor))}
       </p>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
     </Card>
+  );
+}
+
+function DetalhePagamento({ lancamento }: { lancamento: Lancamento }) {
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="flex items-center gap-3 rounded-xl bg-green-50 p-4 dark:bg-green-950/20">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
+          <CheckCircle2 className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Valor pago</p>
+          <p className="text-xl font-bold text-green-700 dark:text-green-400">
+            {fmtBRL(Math.abs(lancamento.valor))}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-lg border p-3">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Data</p>
+          <p className="mt-1 text-sm font-medium">{fmtData(lancamento.data)}</p>
+        </div>
+        <div className="rounded-lg border p-3">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Tipo</p>
+          <p className="mt-1 text-sm font-medium">Pagamento</p>
+        </div>
+      </div>
+
+      <div className="rounded-lg border p-3">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Descrição</p>
+        <p className="mt-1 text-sm">{lancamento.descricao}</p>
+      </div>
+
+      {lancamento.referencia && (
+        <div className="rounded-lg border p-3">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Referência</p>
+          <p className="mt-1 font-mono text-xs">{lancamento.referencia}</p>
+        </div>
+      )}
+    </div>
   );
 }
