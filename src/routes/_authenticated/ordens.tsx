@@ -1,78 +1,82 @@
 import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, AlertCircle } from "lucide-react";
-import { useOrdensLojista } from "@/hooks/useOrdensLojista";
+import { Search, AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useMinhasOrdens } from "@/hooks/useMinhasOrdens";
 import { OSCard } from "@/components/OSCard";
+import { LojaSelector } from "@/components/LojaSelector";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { STATUS_OPCOES } from "@/lib/formatters";
 
 export const Route = createFileRoute("/_authenticated/ordens")({
   component: Ordens,
 });
 
-const FILTROS = [
-  { key: "todas", label: "Todas" },
-  { key: "entregue", label: "Entregue" },
-  { key: "cancelado", label: "Cancelado" },
-] as const;
-
-type FiltroKey = (typeof FILTROS)[number]["key"];
+const LIMIT = 50;
 
 function Ordens() {
-  const { data: ordens, isLoading, isError, error } = useOrdensLojista();
+  const [status, setStatus] = useState<string>("todas");
+  const [loja, setLoja] = useState<string | "todas">("todas");
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState<FiltroKey>("todas");
+  const [offset, setOffset] = useState(0);
+
+  const { data, isLoading, isFetching, isError, error } = useMinhasOrdens({
+    status: status === "todas" ? undefined : status,
+    limit: LIMIT,
+    offset,
+  });
 
   const filtradas = useMemo(() => {
-    const lista = ordens ?? [];
+    const lista = data?.ordens ?? [];
     return lista.filter((os) => {
-      if (filtro !== "todas") {
-        const st = (os.status ?? "").toLowerCase();
-        if (filtro === "entregue" && st !== "entregue") return false;
-        if (filtro === "cancelado" && st !== "cancelado" && st !== "cancelada") return false;
-      }
+      if (loja !== "todas" && os.cliente_id !== loja) return false;
       if (busca) {
         const b = busca.toLowerCase();
-        const match =
-          String(os.numero ?? "").toLowerCase().includes(b) ||
-          String(os.aparelho_modelo ?? "").toLowerCase().includes(b);
-        if (!match) return false;
+        const numStr = String(os.numero_formatado ?? os.numero ?? "").toLowerCase();
+        const modelo = String(os.aparelho?.modelo ?? "").toLowerCase();
+        const lojaNome = String(os.cliente_nome ?? "").toLowerCase();
+        if (!numStr.includes(b) && !modelo.includes(b) && !lojaNome.includes(b)) return false;
       }
       return true;
     });
-  }, [ordens, filtro, busca]);
+  }, [data, loja, busca]);
+
+  const total = data?.total ?? 0;
+  const paginaAtual = Math.floor(offset / LIMIT) + 1;
+  const totalPaginas = Math.max(1, Math.ceil(total / LIMIT));
+
+  function resetPaginacao(setter: () => void) {
+    setter();
+    setOffset(0);
+  }
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Suas ordens</h1>
 
-      {/* Busca */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <LojaSelector value={loja} onChange={(v) => resetPaginacao(() => setLoja(v))} />
+        <select
+          value={status}
+          onChange={(e) => resetPaginacao(() => setStatus(e.target.value))}
+          className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {STATUS_OPCOES.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por número ou modelo…"
+          placeholder="Buscar por número, modelo ou loja…"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           className="pl-9"
         />
-      </div>
-
-      {/* Filtros */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {FILTROS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setFiltro(key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              filtro === key
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
       </div>
 
       {isLoading && (
@@ -90,21 +94,41 @@ function Ordens() {
       )}
       {!isLoading && !isError && filtradas.length === 0 && (
         <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-          {busca || filtro !== "todas"
+          {busca || loja !== "todas" || status !== "todas"
             ? "Nenhuma ordem encontrada com esses filtros"
             : "Nenhuma ordem ainda"}
         </div>
       )}
+
       <div className="space-y-2">
         {filtradas.map((os) => (
           <OSCard key={os.id} os={os} />
         ))}
       </div>
 
-      {!isLoading && filtradas.length > 0 && (
-        <p className="pt-2 text-center text-xs text-muted-foreground">
-          {filtradas.length} {filtradas.length === 1 ? "ordem" : "ordens"}
-        </p>
+      {total > LIMIT && (
+        <div className="flex items-center justify-between gap-2 pt-2">
+          <button
+            type="button"
+            disabled={offset === 0 || isFetching}
+            onClick={() => setOffset(Math.max(0, offset - LIMIT))}
+            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {isFetching && <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />}
+            Página {paginaAtual} de {totalPaginas} ({total} ordens)
+          </span>
+          <button
+            type="button"
+            disabled={offset + LIMIT >= total || isFetching}
+            onClick={() => setOffset(offset + LIMIT)}
+            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+          >
+            Próxima <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
     </div>
   );

@@ -11,14 +11,23 @@ import {
   Wrench,
   ShieldCheck,
   Stethoscope,
+  Calendar,
 } from "lucide-react";
-import { useOrdemDetalhe } from "@/hooks/useOrdemDetalhe";
+import { useOrdemDetalhe, type OrdemTimelineEvento } from "@/hooks/useOrdemDetalhe";
 import { useAprovarOrcamento, useReprovarOrcamento } from "@/hooks/useDecidirOrcamento";
 import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
+import { LojaBadge } from "@/components/LojaBadge";
 
 export const Route = createFileRoute("/_authenticated/ordens_/$id")({
   component: OrdemDetalhePage,
 });
+
+const EVENTO_LABEL: Record<string, string> = {
+  recebido: "Recebido",
+  aprovado: "Aprovado",
+  concluido: "Concluído",
+  entregue: "Entregue",
+};
 
 function OrdemDetalhePage() {
   const { id } = Route.useParams();
@@ -61,17 +70,12 @@ function OrdemDetalhePage() {
   if (isError || !ordem) {
     return (
       <div className="space-y-4">
-        <Link
-          to="/ordens"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
+        <Link to="/ordens" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
         <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-6">
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive" />
-          <p className="text-sm text-destructive">
-            {(error as Error)?.message ?? "Ordem não encontrada"}
-          </p>
+          <p className="text-sm text-destructive">{(error as Error)?.message ?? "Ordem não encontrada"}</p>
         </div>
       </div>
     );
@@ -79,19 +83,17 @@ function OrdemDetalhePage() {
 
   const s = statusInfo(ordem.status);
   const aprov = ordem.aprovacao_orcamento;
-  const podeDecidir = aprov === "pendente";
+  const podeDecidir = ordem.status === "aguardando_aprovacao" && (!aprov || aprov === "pendente");
   const numero = ordem.numero_formatado ?? (ordem.numero != null ? String(ordem.numero) : "—");
   const valorTotal = ordem.valor_total ?? 0;
   const valorPago = ordem.valor_pago ?? 0;
   const valorPendente = ordem.valor_pendente ?? Math.max(valorTotal - valorPago, 0);
-  const garantiaDias = ordem.garantia_dias ?? 0;
+  const custoPecas = ordem.custo_pecas ?? 0;
+  const garantiaDias = ordem.garantia_dias ?? ordem.garantia?.dias_garantia ?? 0;
 
   return (
     <div className="space-y-5 pb-8">
-      <Link
-        to="/ordens"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
+      <Link to="/ordens" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
@@ -100,11 +102,10 @@ function OrdemDetalhePage() {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">Ordem de serviço</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">#{numero}</h1>
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.classes}`}
-          >
+          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.classes}`}>
             {s.label}
           </span>
+          <LojaBadge nome={ordem.cliente?.nome} />
           {garantiaDias > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="h-3 w-3" /> Garantia: {garantiaDias} dias
@@ -118,61 +119,65 @@ function OrdemDetalhePage() {
         </p>
       </div>
 
+      {/* Timeline */}
+      {ordem.timeline?.length > 0 && (
+        <Section icon={Calendar} title="Linha do tempo">
+          <ol className="space-y-3">
+            {ordem.timeline.map((e: OrdemTimelineEvento, i: number) => (
+              <li key={`${e.evento}-${i}`} className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{EVENTO_LABEL[e.evento] ?? e.evento}</p>
+                  <p className="text-xs text-muted-foreground">{fmtData(e.data)}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      )}
+
       {/* Aparelho */}
       <Section icon={Smartphone} title="Aparelho">
         <Linha label="Modelo" valor={ordem.aparelho.modelo ?? "—"} />
         {ordem.aparelho.marca && <Linha label="Marca" valor={ordem.aparelho.marca} />}
         {ordem.aparelho.cor && <Linha label="Cor" valor={ordem.aparelho.cor} />}
-        {ordem.aparelho.capacidade && (
-          <Linha label="Capacidade" valor={ordem.aparelho.capacidade} />
-        )}
+        {ordem.aparelho.capacidade && <Linha label="Capacidade" valor={ordem.aparelho.capacidade} />}
         {ordem.aparelho.imei && <Linha label="IMEI" valor={ordem.aparelho.imei} />}
+        {ordem.aparelho.imei2 && <Linha label="IMEI 2" valor={ordem.aparelho.imei2} />}
+        {ordem.aparelho.estado_geral && <Linha label="Estado geral" valor={ordem.aparelho.estado_geral} />}
       </Section>
 
-      {/* Defeito relatado */}
       {ordem.defeito_relatado && (
         <Section icon={FileText} title="Defeito relatado">
           <p className="whitespace-pre-wrap text-sm text-foreground">{ordem.defeito_relatado}</p>
         </Section>
       )}
-
-      {/* Diagnóstico */}
       {ordem.diagnostico && (
         <Section icon={Stethoscope} title="Diagnóstico">
           <p className="whitespace-pre-wrap text-sm text-foreground">{ordem.diagnostico}</p>
         </Section>
       )}
-
-      {/* Serviço realizado */}
       {ordem.servico_realizado && (
         <Section icon={Wrench} title="Serviço realizado">
           <p className="whitespace-pre-wrap text-sm text-foreground">{ordem.servico_realizado}</p>
         </Section>
       )}
-
-      {/* Observações ao cliente */}
       {ordem.obs_cliente && (
         <Section icon={FileText} title="Observações">
           <p className="whitespace-pre-wrap text-sm text-foreground">{ordem.obs_cliente}</p>
         </Section>
       )}
 
-      {/* Totais */}
+      {/* Valores */}
       <div className="space-y-2 rounded-lg border border-border bg-card p-4">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Total</span>
           <span className="font-medium">{fmtBRL(valorTotal)}</span>
         </div>
-        {(ordem.desconto ?? 0) > 0 && (
+        {custoPecas > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Desconto</span>
-            <span className="font-medium">−{fmtBRL(ordem.desconto ?? 0)}</span>
-          </div>
-        )}
-        {(ordem.sinal_pago ?? 0) > 0 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Sinal pago</span>
-            <span className="font-medium">{fmtBRL(ordem.sinal_pago ?? 0)}</span>
+            <span className="text-muted-foreground">Custo de peças</span>
+            <span className="font-medium">{fmtBRL(custoPecas)}</span>
           </div>
         )}
         <div className="flex justify-between text-sm">
@@ -181,17 +186,23 @@ function OrdemDetalhePage() {
         </div>
         <div className="flex justify-between border-t border-border pt-2">
           <span className="text-sm font-medium">Em aberto</span>
-          <span
-            className={`text-base font-bold ${
-              valorPendente > 0 ? "text-destructive" : "text-primary"
-            }`}
-          >
+          <span className={`text-base font-bold ${valorPendente > 0 ? "text-destructive" : "text-primary"}`}>
             {fmtBRL(valorPendente)}
           </span>
         </div>
       </div>
 
-      {/* Status do orçamento + botões */}
+      {/* Garantia */}
+      {ordem.garantia && (
+        <Section icon={ShieldCheck} title="Garantia">
+          <Linha label="Início" valor={fmtData(ordem.garantia.data_inicio)} />
+          <Linha label="Fim" valor={fmtData(ordem.garantia.data_fim)} />
+          <Linha label="Período" valor={`${ordem.garantia.dias_garantia} dias`} />
+          <Linha label="Status" valor={ordem.garantia.status} />
+        </Section>
+      )}
+
+      {/* Orçamento */}
       <Section icon={CheckCircle2} title="Orçamento">
         {aprov === "pendente" && (
           <p className="text-sm text-foreground">
@@ -201,26 +212,22 @@ function OrdemDetalhePage() {
         {aprov === "aprovado" && (
           <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
-            Aprovado em {fmtData(ordem.orcamento_aprovado_em)}
+            Orçamento aprovado{ordem.data_aprovacao ? ` em ${fmtData(ordem.data_aprovacao)}` : ""}
           </p>
         )}
         {aprov === "reprovado" && (
           <div className="space-y-1.5">
             <p className="flex items-center gap-2 text-sm text-destructive">
-              <XCircle className="h-4 w-4" />
-              Recusado em {fmtData(ordem.orcamento_reprovado_em)}
+              <XCircle className="h-4 w-4" /> Orçamento recusado
             </p>
-            {ordem.orcamento_motivo_reprovacao && (
+            {ordem.motivo_reprovacao && (
               <p className="text-xs text-muted-foreground">
-                Motivo:{" "}
-                <span className="text-foreground">{ordem.orcamento_motivo_reprovacao}</span>
+                Motivo: <span className="text-foreground">{ordem.motivo_reprovacao}</span>
               </p>
             )}
           </div>
         )}
-        {!aprov && (
-          <p className="text-sm text-muted-foreground">Sem orçamento pendente.</p>
-        )}
+        {!aprov && <p className="text-sm text-muted-foreground">Sem orçamento pendente.</p>}
 
         {podeDecidir && (
           <div className="flex gap-2 pt-4">
@@ -229,11 +236,7 @@ function OrdemDetalhePage() {
               disabled={aprovar.isPending || reprovar.isPending}
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              {aprovar.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
+              {aprovar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               {aprovar.isPending ? "Aprovando…" : "Aprovar"}
             </button>
             <button
@@ -241,14 +244,12 @@ function OrdemDetalhePage() {
               disabled={aprovar.isPending || reprovar.isPending}
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-destructive/40 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
             >
-              <XCircle className="h-4 w-4" />
-              Recusar
+              <XCircle className="h-4 w-4" /> Recusar
             </button>
           </div>
         )}
       </Section>
 
-      {/* Modal de recusar */}
       {modalRecusar && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
@@ -267,7 +268,7 @@ function OrdemDetalhePage() {
               onChange={(e) => setMotivo(e.target.value)}
               maxLength={500}
               rows={3}
-              placeholder="Ex: valor acima do esperado, vou usar o aparelho como está…"
+              placeholder="Ex: valor acima do esperado…"
               className="w-full resize-none rounded-md border border-input bg-background p-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <div className="flex gap-2 pt-1">

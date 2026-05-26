@@ -1,11 +1,13 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Home, FileText, Wallet, User } from "lucide-react";
+import { Home, FileText, Wallet, Receipt, ShieldCheck, User } from "lucide-react";
 import { DittLogo } from "./DittLogo";
 
 const NAV = [
   { to: "/dashboard", label: "Início", icon: Home },
   { to: "/ordens", label: "Ordens", icon: FileText },
-  { to: "/financeiro", label: "Financeiro", icon: Wallet },
+  { to: "/financeiro", label: "Extrato", icon: Wallet },
+  { to: "/faturas", label: "Faturas", icon: Receipt },
+  { to: "/garantias", label: "Garantias", icon: ShieldCheck },
   { to: "/perfil", label: "Perfil", icon: User },
 ] as const;
 
@@ -32,12 +34,12 @@ export function Layout() {
               <Link
                 key={to}
                 to={to}
-                className={`flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors ${
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {label}
+                <span className="truncate">{label}</span>
               </Link>
             );
           })}

@@ -1,21 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
+import { LojaBadge } from "@/components/LojaBadge";
 
 interface Props {
   os: {
     id: string;
-    numero: string | number;
+    numero: number | string | null;
+    numero_formatado?: string | null;
     status: string;
-    valor_total: number;
-    criada_em: string;
-    aparelho_modelo: string | null;
-    aguardando_aprovacao: boolean;
+    valor_total: number | null;
+    data_entrada?: string | null;
+    cliente_nome?: string | null;
+    aparelho: { marca: string | null; modelo: string | null; imei: string | null };
+    aguardando_aprovacao?: boolean;
   };
 }
 
 export function OSCard({ os }: Props) {
   const s = statusInfo(os.status);
+  const numero = os.numero_formatado ?? (os.numero != null ? `#${os.numero}` : "—");
+  const aparelho =
+    [os.aparelho?.marca, os.aparelho?.modelo].filter(Boolean).join(" ") || "Aparelho sem modelo";
   return (
     <Link
       to="/ordens/$id"
@@ -25,7 +31,7 @@ export function OSCard({ os }: Props) {
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold">#{os.numero}</span>
+            <span className="text-sm font-semibold">{numero}</span>
             <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.classes}`}>
               {s.label}
             </span>
@@ -34,12 +40,11 @@ export function OSCard({ os }: Props) {
                 <AlertCircle className="h-3 w-3" /> aguardando você
               </span>
             )}
+            <LojaBadge nome={os.cliente_nome} />
           </div>
-          <p className="truncate text-sm text-foreground">
-            {os.aparelho_modelo ?? "Aparelho sem modelo"}
-          </p>
+          <p className="truncate text-sm text-foreground">{aparelho}</p>
           <p className="text-xs text-muted-foreground">
-            {fmtData(os.criada_em)} · {fmtBRL(os.valor_total)}
+            {fmtData(os.data_entrada)} · {fmtBRL(os.valor_total)}
           </p>
         </div>
         <ChevronRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
