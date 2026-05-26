@@ -3,7 +3,7 @@ import { callRpc } from "@/lib/portal-rpc";
 import { toast } from "sonner";
 
 export interface AtualizarPerfilGrupoPayload {
-  nome?: string;
+  nome?: string | null;
   razao_social?: string | null;
   cnpj_matriz?: string | null;
   email?: string | null;
