@@ -1,32 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { callRpc } from "@/lib/portal-rpc";
 
-export interface Lancamento {
-  id: string;
-  tipo: "os" | "pagamento";
-  direcao: "debito" | "credito";
+export interface Movimento {
+  tipo: "fatura" | "pagamento";
   data: string;
-  descricao: string;
   valor: number;
-  referencia: string | null;
+  descricao: string;
+  ordem_id?: string | null;
+  ordem_numero?: string | number | null;
+  forma_pagamento?: string | null;
+  cliente_id?: string | null;
+  cliente_nome: string | null;
 }
 
-export interface ExtratoFinanceiro {
-  success: true;
-  saldo: { total_faturado: number; total_pago: number; devedor: number };
+export interface ExtratoFinanceiroResponse {
+  resumo: { faturado: number; pago: number; devedor: number };
   periodo_dias: number;
-  lancamentos: Lancamento[];
+  movimentos: Movimento[];
 }
 
 export function useExtratoFinanceiro(dias = 90) {
-  return useQuery<ExtratoFinanceiro>({
-    queryKey: ["portal-extrato", dias],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("portal_extrato_financeiro", { p_dias: dias });
-      if (error) throw error;
-      const d = data as { success: boolean; error?: string };
-      if (!d?.success) throw new Error(d?.error ?? "Erro ao carregar extrato");
-      return d as ExtratoFinanceiro;
-    },
+  return useQuery<ExtratoFinanceiroResponse>({
+    queryKey: ["portal", "extrato", dias],
+    queryFn: () =>
+      callRpc<ExtratoFinanceiroResponse>("portal_extrato_financeiro", { p_dias: dias }),
   });
 }

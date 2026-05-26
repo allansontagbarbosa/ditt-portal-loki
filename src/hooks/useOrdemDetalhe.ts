@@ -1,49 +1,62 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { callRpc } from "@/lib/portal-rpc";
 
 export type AprovacaoOrcamento = "pendente" | "aprovado" | "reprovado";
 
 export interface OrdemAparelho {
-  id: string;
   marca: string | null;
   modelo: string | null;
+  imei: string | null;
+  imei2: string | null;
   cor: string | null;
   capacidade: string | null;
-  imei: string | null;
+  estado_geral: string | null;
+}
+
+export interface OrdemGarantia {
+  data_inicio: string;
+  data_fim: string;
+  status: string;
+  dias_garantia: number;
+}
+
+export interface OrdemTimelineEvento {
+  evento: "recebido" | "aprovado" | "concluido" | "entregue" | string;
+  data: string;
 }
 
 export interface OrdemDetalhe {
   id: string;
   numero: number | null;
   numero_formatado: string | null;
-  status: "entregue" | "cancelado";
-  data_entrada: string | null;
-  previsao_entrega: string | null;
-  data_entrega: string | null;
-  data_conclusao: string | null;
+  status: string;
   defeito_relatado: string | null;
   diagnostico: string | null;
   servico_realizado: string | null;
-  observacoes: string | null;
-  obs_cliente: string | null;
+  valor: number | null;
   valor_total: number | null;
   valor_pago: number | null;
   valor_pendente: number | null;
-  desconto: number | null;
-  sinal_pago: number | null;
+  custo_pecas: number | null;
+  data_entrada: string | null;
+  data_aprovacao: string | null;
+  data_conclusao: string | null;
+  data_entrega: string | null;
+  previsao_entrega: string | null;
   aprovacao_orcamento: AprovacaoOrcamento | null;
-  orcamento_aprovado_em: string | null;
-  orcamento_reprovado_em: string | null;
-  orcamento_motivo_reprovacao: string | null;
+  motivo_reprovacao: string | null;
   garantia_dias: number | null;
-  prioridade: string | null;
+  observacoes: string | null;
+  obs_cliente: string | null;
+  prazo_vencido: boolean | null;
   aparelho: OrdemAparelho;
+  cliente: { id: string; nome: string };
+  garantia: OrdemGarantia | null;
+  timeline: OrdemTimelineEvento[];
 }
 
-interface DetalheOrdemResponse {
-  success: boolean;
-  ordem?: OrdemDetalhe;
-  error?: string;
+interface DetalheResponse {
+  ordem: OrdemDetalhe;
 }
 
 export function useOrdemDetalhe(ordemId: string | undefined) {
@@ -51,14 +64,8 @@ export function useOrdemDetalhe(ordemId: string | undefined) {
     queryKey: ["portal", "ordem", ordemId],
     enabled: !!ordemId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("portal_detalhe_ordem", {
-        p_ordem_id: ordemId,
-      });
-      if (error) throw new Error(error.message);
-      const d = data as DetalheOrdemResponse | null;
-      if (!d?.success || !d.ordem) {
-        throw new Error(d?.error ?? "Não foi possível carregar a ordem");
-      }
+      const d = await callRpc<DetalheResponse>("portal_detalhe_ordem", { p_ordem_id: ordemId });
+      if (!d?.ordem) throw new Error("Ordem não encontrada");
       return d.ordem;
     },
   });

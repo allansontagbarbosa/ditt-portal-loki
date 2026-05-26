@@ -1,39 +1,34 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { callRpc } from "@/lib/portal-rpc";
 import { toast } from "sonner";
 
-export interface AtualizarPerfilPayload {
-  telefone?: string;
-  whatsapp?: string;
-  cep?: string;
-  rua?: string;
-  numero_endereco?: string;
-  complemento?: string | null;
-  bairro?: string;
-  cidade?: string;
-  estado?: string;
-}
-
-interface AtualizarPerfilResponse {
-  success: boolean;
-  error?: string;
+export interface AtualizarPerfilGrupoPayload {
+  nome?: string | null;
+  razao_social?: string | null;
+  cnpj_matriz?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  responsavel?: string | null;
+  observacoes?: string | null;
 }
 
 export function useAtualizarMeuPerfil() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (dados: AtualizarPerfilPayload) => {
-      const { data, error } = await supabase.rpc("portal_atualizar_meu_perfil", {
-        p_dados: dados,
+    mutationFn: async (dados: AtualizarPerfilGrupoPayload) => {
+      return await callRpc<unknown>("portal_atualizar_meu_perfil", {
+        p_nome: dados.nome ?? null,
+        p_razao_social: dados.razao_social ?? null,
+        p_cnpj_matriz: dados.cnpj_matriz ?? null,
+        p_email: dados.email ?? null,
+        p_telefone: dados.telefone ?? null,
+        p_responsavel: dados.responsavel ?? null,
+        p_observacoes: dados.observacoes ?? null,
       });
-      if (error) throw new Error(error.message);
-      const d = data as AtualizarPerfilResponse | null;
-      if (!d?.success) throw new Error(d?.error ?? "Não foi possível salvar suas alterações");
-      return d;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["meu-perfil"] });
-      toast.success("Dados atualizados");
+      qc.invalidateQueries({ queryKey: ["portal", "meu-perfil"] });
+      toast.success("Dados do grupo atualizados");
     },
     onError: (e: Error) => toast.error(`Erro: ${e.message}`),
   });

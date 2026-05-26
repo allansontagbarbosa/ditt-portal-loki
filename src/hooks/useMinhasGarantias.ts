@@ -1,37 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { callRpc } from "@/lib/portal-rpc";
 
 export interface Garantia {
   id: string;
   ordem_id: string;
-  numero_os: string | null;
+  ordem_numero: string | number | null;
   data_inicio: string;
   data_fim: string;
   dias_garantia: number;
   status: string;
   ativa: boolean;
   dias_restantes: number;
-  aparelho_marca: string | null;
-  aparelho_modelo: string | null;
-  aparelho_imei: string | null;
+  cliente_id?: string | null;
+  cliente_nome: string | null;
+  aparelho: { marca: string | null; modelo: string | null; imei: string | null };
   observacoes: string | null;
 }
 
-interface MinhasGarantiasResponse {
-  success: boolean;
-  garantias?: Garantia[];
-  error?: string;
+export interface MinhasGarantiasResponse {
+  garantias: Garantia[];
+  resumo: { total_ativas: number; expirando_30d: number; ja_expiradas: number };
 }
 
 export function useMinhasGarantias() {
-  return useQuery<Garantia[]>({
-    queryKey: ["minhas-garantias"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("portal_minhas_garantias");
-      if (error) throw new Error(error.message);
-      const d = data as MinhasGarantiasResponse | null;
-      if (!d?.success) throw new Error(d?.error ?? "Não foi possível carregar as garantias");
-      return d.garantias ?? [];
-    },
+  return useQuery<MinhasGarantiasResponse>({
+    queryKey: ["portal", "garantias"],
+    queryFn: () => callRpc<MinhasGarantiasResponse>("portal_minhas_garantias"),
   });
 }

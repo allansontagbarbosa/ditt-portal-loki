@@ -17,8 +17,8 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOrdensRouteImport } from './routes/_authenticated/ordens'
 import { Route as AuthenticatedGarantiasRouteImport } from './routes/_authenticated/garantias'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
+import { Route as AuthenticatedFaturasRouteImport } from './routes/_authenticated/faturas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAparelhosRouteImport } from './routes/_authenticated/aparelhos'
 import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens_.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -60,14 +60,14 @@ const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFaturasRoute = AuthenticatedFaturasRouteImport.update({
+  id: '/faturas',
+  path: '/faturas',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedAparelhosRoute = AuthenticatedAparelhosRouteImport.update({
-  id: '/aparelhos',
-  path: '/aparelhos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedOrdensIdRoute = AuthenticatedOrdensIdRouteImport.update({
@@ -79,8 +79,8 @@ const AuthenticatedOrdensIdRoute = AuthenticatedOrdensIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/aparelhos': typeof AuthenticatedAparelhosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/faturas': typeof AuthenticatedFaturasRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantias': typeof AuthenticatedGarantiasRoute
   '/ordens': typeof AuthenticatedOrdensRoute
@@ -91,8 +91,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/aparelhos': typeof AuthenticatedAparelhosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/faturas': typeof AuthenticatedFaturasRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantias': typeof AuthenticatedGarantiasRoute
   '/ordens': typeof AuthenticatedOrdensRoute
@@ -105,8 +105,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/aparelhos': typeof AuthenticatedAparelhosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/faturas': typeof AuthenticatedFaturasRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/garantias': typeof AuthenticatedGarantiasRoute
   '/_authenticated/ordens': typeof AuthenticatedOrdensRoute
@@ -119,8 +119,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/aparelhos'
     | '/dashboard'
+    | '/faturas'
     | '/financeiro'
     | '/garantias'
     | '/ordens'
@@ -131,8 +131,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/aparelhos'
     | '/dashboard'
+    | '/faturas'
     | '/financeiro'
     | '/garantias'
     | '/ordens'
@@ -144,8 +144,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
-    | '/_authenticated/aparelhos'
     | '/_authenticated/dashboard'
+    | '/_authenticated/faturas'
     | '/_authenticated/financeiro'
     | '/_authenticated/garantias'
     | '/_authenticated/ordens'
@@ -219,18 +219,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/faturas': {
+      id: '/_authenticated/faturas'
+      path: '/faturas'
+      fullPath: '/faturas'
+      preLoaderRoute: typeof AuthenticatedFaturasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/aparelhos': {
-      id: '/_authenticated/aparelhos'
-      path: '/aparelhos'
-      fullPath: '/aparelhos'
-      preLoaderRoute: typeof AuthenticatedAparelhosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/ordens_/$id': {
@@ -244,8 +244,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAparelhosRoute: typeof AuthenticatedAparelhosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFaturasRoute: typeof AuthenticatedFaturasRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedGarantiasRoute: typeof AuthenticatedGarantiasRoute
   AuthenticatedOrdensRoute: typeof AuthenticatedOrdensRoute
@@ -254,8 +254,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAparelhosRoute: AuthenticatedAparelhosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFaturasRoute: AuthenticatedFaturasRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedGarantiasRoute: AuthenticatedGarantiasRoute,
   AuthenticatedOrdensRoute: AuthenticatedOrdensRoute,
@@ -276,13 +276,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
