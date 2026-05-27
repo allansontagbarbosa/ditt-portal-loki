@@ -240,16 +240,17 @@ function TrocarSenhaModal({
       toast.error("Email não identificado");
       return;
     }
-    if (nova.length < 8) {
-      toast.error("Nova senha deve ter ao menos 8 caracteres");
+    if (nova !== conf) {
+      toast.error("Confirmação não confere");
       return;
     }
     if (nova === atual) {
       toast.error("Nova senha deve ser diferente da atual");
       return;
     }
-    if (nova !== conf) {
-      toast.error("Confirmação não confere");
+    const erroForca = validarSenhaForte(nova);
+    if (erroForca) {
+      toast.error(erroForca);
       return;
     }
     setLoading(true);
@@ -262,7 +263,7 @@ function TrocarSenhaModal({
     const { error: updErr } = await supabase.auth.updateUser({ password: nova });
     setLoading(false);
     if (updErr) {
-      toast.error(`Erro: ${updErr.message}`);
+      toast.error(traduzirErroAuth(updErr.message));
       return;
     }
     onSuccess();
@@ -277,6 +278,18 @@ function TrocarSenhaModal({
             Mínimo de 8 caracteres. Você será desconectado após a troca.
           </DialogDescription>
         </DialogHeader>
+        <ul className="space-y-1 rounded-md border border-border bg-muted/40 p-3 text-[12px] text-muted-foreground">
+          {[
+            "Mínimo 8 caracteres",
+            "Misture letras e números",
+            "Evite senhas óbvias (123456, qwerty, datas)",
+          ].map((r) => (
+            <li key={r} className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-primary" />
+              <span>{r}</span>
+            </li>
+          ))}
+        </ul>
         <div className="space-y-3">
           <PasswordField label="Senha atual" value={atual} onChange={setAtual} show={showA} toggle={() => setShowA((s) => !s)} />
           <PasswordField label="Nova senha" value={nova} onChange={setNova} show={showN} toggle={() => setShowN((s) => !s)} />
@@ -294,6 +307,46 @@ function TrocarSenhaModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+const SENHAS_RUINS = [
+  "12345678", "123456789", "1234567890", "senha123", "password",
+  "11111111", "22222222", "qwerty123", "abc12345", "@12345678",
+  "admin123", "iloveyou",
+];
+
+function validarSenhaForte(senha: string): string | null {
+  if (senha.length < 8) return "Senha deve ter no mínimo 8 caracteres";
+  if (!/[a-zA-Z]/.test(senha)) return "Senha deve conter pelo menos uma letra";
+  if (!/[0-9]/.test(senha)) return "Senha deve conter pelo menos um número";
+  if (SENHAS_RUINS.includes(senha.toLowerCase())) {
+    return "Essa senha é muito comum. Escolha uma diferente.";
+  }
+  if (/^(.)\1+$/.test(senha)) return "Senha não pode ser todos os caracteres iguais";
+  if (/^(0123456789|abcdefghij|qwertyuiop)/i.test(senha)) {
+    return "Evite sequências óbvias como 123 ou abc";
+  }
+  return null;
+}
+
+function traduzirErroAuth(rawMessage: string): string {
+  const msg = (rawMessage ?? "").toLowerCase();
+  if (msg.includes("weak") || msg.includes("easy to guess") || msg.includes("compromised") || msg.includes("pwned")) {
+    return "Essa senha aparece em listas de senhas vazadas. Escolha uma diferente — tente combinar palavras, números e símbolos.";
+  }
+  if (msg.includes("same as") || msg.includes("different from the old")) {
+    return "A nova senha precisa ser diferente da atual.";
+  }
+  if (msg.includes("at least") && msg.includes("characters")) {
+    return "A senha precisa ter no mínimo 8 caracteres.";
+  }
+  if (msg.includes("invalid login") || msg.includes("credentials")) {
+    return "Senha atual incorreta.";
+  }
+  if (msg.includes("rate limit") || msg.includes("too many")) {
+    return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+  }
+  return "Não foi possível trocar a senha. Tente novamente.";
 }
 
 function PasswordField({
