@@ -13,6 +13,13 @@ export const fmtData = (iso: string | null | undefined): string => {
   }
 };
 
+export const fmtNumeroOS = (input: number | string | null | undefined): string => {
+  if (input == null || input === "") return "";
+  let s = String(input).trim().replace(/^OS[\s-]?/i, "").replace(/^#/, "");
+  if (/^\d+$/.test(s)) s = s.padStart(6, "0");
+  return `#${s}`;
+};
+
 export interface StatusInfo {
   label: string;
   classes: string;

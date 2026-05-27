@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useOrdemDetalhe, type OrdemTimelineEvento } from "@/hooks/useOrdemDetalhe";
 import { useAprovarOrcamento, useReprovarOrcamento } from "@/hooks/useDecidirOrcamento";
-import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
+import { fmtBRL, fmtData, fmtNumeroOS, statusInfo } from "@/lib/formatters";
 import { LojaBadge } from "@/components/LojaBadge";
 
 export const Route = createFileRoute("/_authenticated/ordens_/$id")({
@@ -84,7 +84,7 @@ function OrdemDetalhePage() {
   const s = statusInfo(ordem.status);
   const aprov = ordem.aprovacao_orcamento;
   const podeDecidir = ordem.status === "aguardando_aprovacao" && (!aprov || aprov === "pendente");
-  const numero = ordem.numero_formatado ?? (ordem.numero != null ? String(ordem.numero) : "—");
+  const numero = fmtNumeroOS(ordem.numero_formatado ?? ordem.numero) || "—";
   const valorTotal = ordem.valor_total ?? 0;
   const valorPago = ordem.valor_pago ?? 0;
   const valorPendente = ordem.valor_pendente ?? Math.max(valorTotal - valorPago, 0);
@@ -101,7 +101,7 @@ function OrdemDetalhePage() {
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">Ordem de serviço</p>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">#{numero}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{numero}</h1>
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${s.classes}`}>
             {s.label}
           </span>
