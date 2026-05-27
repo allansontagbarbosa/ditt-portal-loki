@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, AlertCircle } from "lucide-react";
-import { fmtBRL, fmtData, statusInfo } from "@/lib/formatters";
+import { fmtBRL, fmtData, fmtNumeroOS, statusInfo } from "@/lib/formatters";
 import { LojaBadge } from "@/components/LojaBadge";
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 
 export function OSCard({ os }: Props) {
   const s = statusInfo(os.status);
-  const numero = os.numero_formatado ?? (os.numero != null ? `#${os.numero}` : "—");
+  const numero = fmtNumeroOS(os.numero_formatado ?? os.numero) || "—";
   const aparelho =
     [os.aparelho?.marca, os.aparelho?.modelo].filter(Boolean).join(" ") || "Aparelho sem modelo";
   return (

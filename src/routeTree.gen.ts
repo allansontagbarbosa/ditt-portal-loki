@@ -18,6 +18,7 @@ import { Route as AuthenticatedOrdensRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedGarantiasRouteImport } from './routes/_authenticated/garantias'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedFaturasRouteImport } from './routes/_authenticated/faturas'
+import { Route as AuthenticatedExtratoRouteImport } from './routes/_authenticated/extrato'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens_.$id'
 
@@ -65,6 +66,11 @@ const AuthenticatedFaturasRoute = AuthenticatedFaturasRouteImport.update({
   path: '/faturas',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExtratoRoute = AuthenticatedExtratoRouteImport.update({
+  id: '/extrato',
+  path: '/extrato',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/extrato': typeof AuthenticatedExtratoRoute
   '/faturas': typeof AuthenticatedFaturasRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantias': typeof AuthenticatedGarantiasRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/extrato': typeof AuthenticatedExtratoRoute
   '/faturas': typeof AuthenticatedFaturasRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/garantias': typeof AuthenticatedGarantiasRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/extrato': typeof AuthenticatedExtratoRoute
   '/_authenticated/faturas': typeof AuthenticatedFaturasRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/garantias': typeof AuthenticatedGarantiasRoute
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/extrato'
     | '/faturas'
     | '/financeiro'
     | '/garantias'
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/extrato'
     | '/faturas'
     | '/financeiro'
     | '/garantias'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/dashboard'
+    | '/_authenticated/extrato'
     | '/_authenticated/faturas'
     | '/_authenticated/financeiro'
     | '/_authenticated/garantias'
@@ -226,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFaturasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/extrato': {
+      id: '/_authenticated/extrato'
+      path: '/extrato'
+      fullPath: '/extrato'
+      preLoaderRoute: typeof AuthenticatedExtratoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -245,6 +264,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedExtratoRoute: typeof AuthenticatedExtratoRoute
   AuthenticatedFaturasRoute: typeof AuthenticatedFaturasRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedGarantiasRoute: typeof AuthenticatedGarantiasRoute
@@ -255,6 +275,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedExtratoRoute: AuthenticatedExtratoRoute,
   AuthenticatedFaturasRoute: AuthenticatedFaturasRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedGarantiasRoute: AuthenticatedGarantiasRoute,

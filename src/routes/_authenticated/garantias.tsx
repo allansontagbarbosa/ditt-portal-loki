@@ -5,7 +5,7 @@ import { useMinhasGarantias } from "@/hooks/useMinhasGarantias";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fmtData } from "@/lib/formatters";
+import { fmtData, fmtNumeroOS } from "@/lib/formatters";
 import { LojaBadge } from "@/components/LojaBadge";
 import { LojaSelector } from "@/components/LojaSelector";
 
@@ -150,7 +150,7 @@ function Garantias() {
                     <LojaBadge nome={g.cliente_nome} />
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
-                    OS #{g.ordem_numero ?? "—"}
+                    OS {fmtNumeroOS(g.ordem_numero) || "—"}
                     {g.aparelho?.imei ? ` · IMEI ${g.aparelho.imei}` : ""}
                   </p>
                   <p
