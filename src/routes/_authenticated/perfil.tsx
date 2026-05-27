@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Loader2, AlertCircle, LogOut, Lock, Store, KeyRound, Eye, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, LogOut, Lock, Store, KeyRound, Eye, EyeOff, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuPerfilGrupo } from "@/hooks/useMeuPerfilGrupo";
