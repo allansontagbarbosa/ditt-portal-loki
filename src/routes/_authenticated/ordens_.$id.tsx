@@ -13,7 +13,7 @@ import {
   Stethoscope,
   Calendar,
 } from "lucide-react";
-import { useOrdemDetalhe, type OrdemTimelineEvento } from "@/hooks/useOrdemDetalhe";
+import { useOrdemDetalhe, type OrdemTimelineEvento, type OrdemServico, type ServicoBadge } from "@/hooks/useOrdemDetalhe";
 import { useAprovarOrcamento, useReprovarOrcamento } from "@/hooks/useDecidirOrcamento";
 import { fmtBRL, fmtData, fmtNumeroOS, statusInfo } from "@/lib/formatters";
 import { LojaBadge } from "@/components/LojaBadge";
@@ -28,6 +28,23 @@ const EVENTO_LABEL: Record<string, string> = {
   concluido: "Concluído",
   entregue: "Entregue",
 };
+
+function tituloServico(nome: string | null | undefined): string {
+  const s = (nome ?? "").trim().toLowerCase();
+  if (!s) return "—";
+  return s.replace(/\b([a-zà-ÿ])([a-zà-ÿ0-9]*)/g, (_, a: string, b: string) => a.toUpperCase() + b);
+}
+
+function badgeClasses(badge: ServicoBadge): string {
+  switch (badge) {
+    case "concluido":
+      return "bg-primary/10 text-primary border border-primary/30";
+    case "andamento":
+      return "bg-amber-500/10 text-amber-700 border border-amber-500/30 dark:text-amber-400";
+    default:
+      return "bg-muted text-muted-foreground border border-border";
+  }
+}
 
 function OrdemDetalhePage() {
   const { id } = Route.useParams();
@@ -150,6 +167,23 @@ function OrdemDetalhePage() {
       {ordem.defeito_relatado && (
         <Section icon={FileText} title="Defeito relatado">
           <p className="whitespace-pre-wrap text-sm text-foreground">{ordem.defeito_relatado}</p>
+        </Section>
+      )}
+      {ordem.servicos?.length > 0 && (
+        <Section icon={Wrench} title="Serviços executados">
+          <ul className="divide-y divide-border">
+            {ordem.servicos.map((srv: OrdemServico) => (
+              <li key={srv.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <p className="text-sm font-medium text-foreground">{tituloServico(srv.nome)}</p>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClasses(srv.badge)}`}>
+                    {srv.badge_label}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-foreground">{fmtBRL(srv.valor ?? 0)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </Section>
       )}
       {ordem.diagnostico && (
