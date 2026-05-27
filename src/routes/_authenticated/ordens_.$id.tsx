@@ -29,6 +29,23 @@ const EVENTO_LABEL: Record<string, string> = {
   entregue: "Entregue",
 };
 
+function tituloServico(nome: string | null | undefined): string {
+  const s = (nome ?? "").trim().toLowerCase();
+  if (!s) return "—";
+  return s.replace(/\b([a-zà-ÿ])([a-zà-ÿ0-9]*)/g, (_, a: string, b: string) => a.toUpperCase() + b);
+}
+
+function badgeClasses(badge: ServicoBadge): string {
+  switch (badge) {
+    case "concluido":
+      return "bg-primary/10 text-primary border border-primary/30";
+    case "andamento":
+      return "bg-amber-500/10 text-amber-700 border border-amber-500/30 dark:text-amber-400";
+    default:
+      return "bg-muted text-muted-foreground border border-border";
+  }
+}
+
 function OrdemDetalhePage() {
   const { id } = Route.useParams();
   const { data: ordem, isLoading, isError, error } = useOrdemDetalhe(id);
