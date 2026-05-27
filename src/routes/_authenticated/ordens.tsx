@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useMinhasOrdens } from "@/hooks/useMinhasOrdens";
+import { useLojasDoGrupo } from "@/hooks/useLojasDoGrupo";
 import { OSCard } from "@/components/OSCard";
 import { LojaSelector } from "@/components/LojaSelector";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,17 @@ function Ordens() {
     offset,
   });
 
+  const { data: lojasData } = useLojasDoGrupo();
+  const lojaNomeSelecionado = useMemo(() => {
+    if (loja === "todas") return null;
+    const found = lojasData?.lojas?.find((l) => l.cliente_id === loja);
+    return found?.cliente_nome?.trim() ?? null;
+  }, [loja, lojasData]);
+
   const filtradas = useMemo(() => {
     const lista = data?.ordens ?? [];
     return lista.filter((os) => {
-      if (loja !== "todas" && os.cliente_id !== loja) return false;
+      if (lojaNomeSelecionado && (os.cliente_nome ?? "").trim() !== lojaNomeSelecionado) return false;
       if (busca) {
         const b = busca.toLowerCase();
         const numStr = String(os.numero_formatado ?? os.numero ?? "").toLowerCase();
@@ -39,7 +47,7 @@ function Ordens() {
       }
       return true;
     });
-  }, [data, loja, busca]);
+  }, [data, lojaNomeSelecionado, busca]);
 
   const total = data?.total ?? 0;
   const paginaAtual = Math.floor(offset / LIMIT) + 1;
