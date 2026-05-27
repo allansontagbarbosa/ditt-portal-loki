@@ -20,6 +20,20 @@ export interface OrdemGarantia {
   dias_garantia: number;
 }
 
+export type ServicoBadge = "concluido" | "andamento" | "nao_iniciado";
+
+export interface OrdemServico {
+  id: string;
+  nome: string;
+  valor: number | null;
+  categoria: string | null;
+  status_raw: string | null;
+  badge: ServicoBadge;
+  badge_label: string;
+  iniciado_em: string | null;
+  concluido_em: string | null;
+}
+
 export interface OrdemTimelineEvento {
   evento: "recebido" | "aprovado" | "concluido" | "entregue" | string;
   data: string;
