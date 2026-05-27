@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Loader2, AlertCircle, LogOut, Lock, Store, KeyRound } from "lucide-react";
+import { Loader2, AlertCircle, LogOut, Lock, Store, KeyRound, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useMeuPerfilGrupo } from "@/hooks/useMeuPerfilGrupo";
@@ -11,6 +11,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: PerfilPage,
@@ -28,6 +36,12 @@ const EMPTY: Record<FieldKey, string> = {
   observacoes: "",
 };
 
+function isDirty(v: string | null | undefined): boolean {
+  if (!v) return false;
+  const t = String(v).trim();
+  return t !== "" && t !== "0" && t !== "-";
+}
+
 function PerfilPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -36,7 +50,7 @@ function PerfilPage() {
 
   const [form, setForm] = useState<Record<FieldKey, string>>(EMPTY);
   const [dirty, setDirty] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
 
   useEffect(() => {
     if (data?.grupo) {
@@ -65,24 +79,6 @@ function PerfilPage() {
       payload[k] = v === "" ? null : v;
     });
     atualizar.mutate(payload, { onSuccess: () => setDirty(false) });
-  }
-
-  async function handleResetSenha() {
-    const email = data?.user_email ?? user?.email;
-    if (!email) {
-      toast.error("Não foi possível identificar seu email");
-      return;
-    }
-    setResetLoading(true);
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setResetLoading(false);
-    if (err) {
-      toast.error(`Erro: ${err.message}`);
-      return;
-    }
-    toast.success(`Email de recuperação enviado para ${email}`);
   }
 
   async function handleSignOut() {
@@ -128,18 +124,9 @@ function PerfilPage() {
                 {data.user_email ?? user?.email ?? "—"}
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleResetSenha}
-              disabled={resetLoading}
-            >
-              {resetLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="mr-2 h-4 w-4" />
-              )}
-              {resetLoading ? "Enviando…" : "Trocar senha"}
+            <Button variant="outline" className="w-full" onClick={() => setPwOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Trocar senha
             </Button>
           </SectionCard>
 
@@ -185,9 +172,10 @@ function PerfilPage() {
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                     <span>{l.qtd_os} OSs</span>
                     <span>{l.qtd_aparelhos} aparelhos</span>
-                    {l.telefone && <span>{l.telefone}</span>}
+                    {isDirty(l.telefone) && <span>Tel: {l.telefone}</span>}
+                    {isDirty(l.email) && <span>{l.email}</span>}
                   </div>
-                  {l.endereco && (
+                  {isDirty(l.endereco) && (
                     <p className="mt-1 truncate text-[11px] text-muted-foreground">{l.endereco}</p>
                   )}
                 </div>
@@ -200,6 +188,146 @@ function PerfilPage() {
       <Button variant="outline" className="w-full" onClick={handleSignOut}>
         <LogOut className="mr-2 h-4 w-4" /> Sair
       </Button>
+
+      <TrocarSenhaModal
+        open={pwOpen}
+        onClose={() => setPwOpen(false)}
+        email={data?.user_email ?? user?.email ?? null}
+        onSuccess={async () => {
+          setPwOpen(false);
+          toast.success("Senha alterada. Você será desconectado e precisará entrar novamente.");
+          await signOut();
+          navigate({ to: "/login" });
+        }}
+      />
+    </div>
+  );
+}
+
+function TrocarSenhaModal({
+  open,
+  onClose,
+  email,
+  onSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  email: string | null;
+  onSuccess: () => void;
+}) {
+  const [atual, setAtual] = useState("");
+  const [nova, setNova] = useState("");
+  const [conf, setConf] = useState("");
+  const [showA, setShowA] = useState(false);
+  const [showN, setShowN] = useState(false);
+  const [showC, setShowC] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setAtual("");
+      setNova("");
+      setConf("");
+      setShowA(false);
+      setShowN(false);
+      setShowC(false);
+      setLoading(false);
+    }
+  }, [open]);
+
+  async function handleSubmit() {
+    if (!email) {
+      toast.error("Email não identificado");
+      return;
+    }
+    if (nova.length < 8) {
+      toast.error("Nova senha deve ter ao menos 8 caracteres");
+      return;
+    }
+    if (nova === atual) {
+      toast.error("Nova senha deve ser diferente da atual");
+      return;
+    }
+    if (nova !== conf) {
+      toast.error("Confirmação não confere");
+      return;
+    }
+    setLoading(true);
+    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password: atual });
+    if (signErr) {
+      setLoading(false);
+      toast.error("Senha atual incorreta");
+      return;
+    }
+    const { error: updErr } = await supabase.auth.updateUser({ password: nova });
+    setLoading(false);
+    if (updErr) {
+      toast.error(`Erro: ${updErr.message}`);
+      return;
+    }
+    onSuccess();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Trocar senha</DialogTitle>
+          <DialogDescription>
+            Mínimo de 8 caracteres. Você será desconectado após a troca.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <PasswordField label="Senha atual" value={atual} onChange={setAtual} show={showA} toggle={() => setShowA((s) => !s)} />
+          <PasswordField label="Nova senha" value={nova} onChange={setNova} show={showN} toggle={() => setShowN((s) => !s)} />
+          <PasswordField label="Confirmar nova senha" value={conf} onChange={setConf} show={showC} toggle={() => setShowC((s) => !s)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? "Alterando…" : "Alterar senha"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  show,
+  toggle,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  toggle: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        <Input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="pr-10"
+        />
+        <button
+          type="button"
+          onClick={toggle}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+          aria-label={show ? "Esconder senha" : "Mostrar senha"}
+        >
+          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }
