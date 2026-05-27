@@ -13,7 +13,7 @@ import {
   Stethoscope,
   Calendar,
 } from "lucide-react";
-import { useOrdemDetalhe, type OrdemTimelineEvento } from "@/hooks/useOrdemDetalhe";
+import { useOrdemDetalhe, type OrdemTimelineEvento, type OrdemServico, type ServicoBadge } from "@/hooks/useOrdemDetalhe";
 import { useAprovarOrcamento, useReprovarOrcamento } from "@/hooks/useDecidirOrcamento";
 import { fmtBRL, fmtData, fmtNumeroOS, statusInfo } from "@/lib/formatters";
 import { LojaBadge } from "@/components/LojaBadge";
