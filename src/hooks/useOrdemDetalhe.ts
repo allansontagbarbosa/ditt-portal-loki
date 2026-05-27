@@ -66,6 +66,7 @@ export interface OrdemDetalhe {
   aparelho: OrdemAparelho;
   cliente: { id: string; nome: string };
   garantia: OrdemGarantia | null;
+  servicos: OrdemServico[];
   timeline: OrdemTimelineEvento[];
 }
 
