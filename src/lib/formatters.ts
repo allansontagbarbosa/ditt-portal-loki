@@ -31,8 +31,8 @@ export function statusInfo(status: string | null | undefined): StatusInfo {
     pronto: { label: "Pronto pra retirar", classes: "bg-primary/10 text-primary border-primary/30" },
     pronta: { label: "Pronta pra retirar", classes: "bg-primary/10 text-primary border-primary/30" },
     entregue: { label: "Entregue", classes: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400" },
-    cancelado: { label: "Cancelada", classes: "bg-muted text-muted-foreground border-border" },
-    cancelada: { label: "Cancelada", classes: "bg-muted text-muted-foreground border-border" },
+    cancelado: { label: "Cancelado", classes: "bg-muted text-muted-foreground border-border" },
+    cancelada: { label: "Cancelado", classes: "bg-muted text-muted-foreground border-border" },
   };
   return map[status ?? ""] ?? { label: status ?? "—", classes: "bg-muted text-muted-foreground border-border" };
 }
