@@ -47,5 +47,5 @@ export const STATUS_OPCOES = [
   { value: "aguardando_peca", label: "Aguardando peça" },
   { value: "pronto", label: "Pronto pra retirar" },
   { value: "entregue", label: "Entregue" },
-  { value: "cancelado", label: "Cancelada" },
+  { value: "cancelado", label: "Cancelado" },
 ] as const;
