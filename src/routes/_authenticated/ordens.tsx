@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useMinhasOrdens } from "@/hooks/useMinhasOrdens";
+import { useLojasDoGrupo } from "@/hooks/useLojasDoGrupo";
 import { OSCard } from "@/components/OSCard";
 import { LojaSelector } from "@/components/LojaSelector";
 import { Input } from "@/components/ui/input";
